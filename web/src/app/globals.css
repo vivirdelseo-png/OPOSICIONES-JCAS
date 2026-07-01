@@ -851,3 +851,11 @@ code {
   background: #eef2f7;
   border-radius: 4px;
 }
+
+.admin-bancos-filtros {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
