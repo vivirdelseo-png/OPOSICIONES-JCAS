@@ -13,20 +13,28 @@ export function AdminBancos({ bancos: initial }: Props) {
   const [bancos, setBancos] = useState(initial);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [materiaFiltro, setMateriaFiltro] = useState("todas");
 
   useEffect(() => {
     setBancos(initial);
   }, [initial]);
 
+  const materias = useMemo(() => {
+    const nombres = new Set(bancos.map((b) => materiaNombre(b.materias)));
+    return ["todas", ...Array.from(nombres).sort((a, b) => a.localeCompare(b))];
+  }, [bancos]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return bancos;
-    return bancos.filter(
-      (b) =>
-        b.nombre.toLowerCase().includes(q) ||
-        materiaNombre(b.materias).toLowerCase().includes(q),
-    );
-  }, [bancos, search]);
+    return bancos.filter((b) => {
+      const nombreB = b.nombre.toLowerCase();
+      const materiaB = materiaNombre(b.materias).toLowerCase();
+      const pasaTexto = !q || nombreB.includes(q) || materiaB.includes(q);
+      const pasaMateria =
+        materiaFiltro === "todas" || materiaB === materiaFiltro.toLowerCase();
+      return pasaTexto && pasaMateria;
+    });
+  }, [bancos, search, materiaFiltro]);
 
   async function eliminar(id: string, nombre: string) {
     if (!confirm(`¿Eliminar el banco «${nombre}» y todas sus preguntas?`)) return;
@@ -46,14 +54,47 @@ export function AdminBancos({ bancos: initial }: Props) {
       <h2>Bancos</h2>
       <p className="muted small">Temario jurídicas JEX — Junta de Extremadura.</p>
 
-      <label className="admin-filter">
-        Buscar banco
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Nombre, materia…"
-        />
-      </label>
+      <div className="admin-bancos-filtros">
+        <label className="admin-filter" style={{ flex: 1 }}>
+          Buscar banco
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Nombre, materia…"
+          />
+        </label>
+
+        <label className="admin-filter" style={{ minWidth: "200px" }}>
+          Materia
+          <select
+            value={materiaFiltro}
+            onChange={(e) => setMateriaFiltro(e.target.value)}
+            style={{
+              display: "block",
+              width: "100%",
+              marginTop: "0.35rem",
+              padding: "0.65rem 0.75rem",
+              font: "inherit",
+              fontSize: "0.95rem",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              background: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            {materias.map((m) => (
+              <option key={m} value={m}>
+                {m === "todas" ? "Todas" : m}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <p className="muted small" style={{ marginBottom: "0.75rem" }}>
+        {filtered.length} banco{filtered.length !== 1 ? "s" : ""}
+        {materiaFiltro !== "todas" ? ` en ${materiaFiltro}` : " en total"}
+      </p>
 
       {filtered.length === 0 ? (
         <p className="muted">
